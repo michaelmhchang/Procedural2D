@@ -1,7 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://b3iort32apq48"]
+[gd_scene load_steps=10 format=3 uid="uid://b3iort32apq48"]
 
 [ext_resource type="Texture2D" uid="uid://dleu61gef4fws" path="res://tileSet/Tilesets/Grass.png" id="1_86vlk"]
 [ext_resource type="Script" path="res://World.cs" id="1_eghhq"]
+[ext_resource type="Script" path="res://NoiseVisual.cs" id="4_4ilpa"]
 [ext_resource type="PackedScene" uid="uid://bccsa00ojccne" path="res://Button.tscn" id="4_uq7b3"]
 [ext_resource type="Texture2D" uid="uid://bgasrxk6vqpwo" path="res://tileSet/Tilesets/Tilled_Dirt.png" id="5_jnfev"]
 
@@ -158,11 +159,6 @@ texture = ExtResource("5_jnfev")
 [sub_resource type="TileSet" id="TileSet_pt24t"]
 sources/0 = SubResource("TileSetAtlasSource_k5he2")
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_wv2il"]
-
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_wf3ky"]
-noise = SubResource("FastNoiseLite_wv2il")
-
 [node name="World" type="Node2D"]
 script = ExtResource("1_eghhq")
 fractalOctaves = 3
@@ -177,9 +173,7 @@ tile_set = SubResource("TileSet_pt24t")
 format = 2
 
 [node name="NoiseVisual" type="Sprite2D" parent="."]
-position = Vector2(168, 160)
-scale = Vector2(0.5, 0.5)
-texture = SubResource("NoiseTexture2D_wf3ky")
+script = ExtResource("4_4ilpa")
 
 [node name="NoiseMapButton" parent="." instance=ExtResource("4_uq7b3")]
 offset_left = 248.0

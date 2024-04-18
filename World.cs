@@ -4,8 +4,8 @@ using Godot;
 public partial class World : Node2D
 {
 	[ExportGroup("Noise Parameter")]
-	[Export]
-	int noiseType = 1;
+	[Export(PropertyHint.Enum, "Simplex, Simplex Smooth, Cellular, Perlin, Value, Value Cubic")]
+	public FastNoiseLite.NoiseTypeEnum noiseType { get; set; }
 	[Export(PropertyHint.Range, "0, 0.1f")]
 	float frequency = 0.02f; // Adjust frequency for different levels of detail
 	[Export]
@@ -20,67 +20,56 @@ public partial class World : Node2D
 	Button newMapButton;
 	Godot.Sprite2D noiseVisual;
 
-	uint screenX;
-	uint screenY;
+	float screenX;
+	float screenY;
 
 	FastNoiseLite noise;
+	NoiseTexture2D noiseTexture2D;
 	RandomNumberGenerator rng;
 
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		// Screen size
+		screenX = GetViewportRect().Size.X;
+		screenY = GetViewportRect().Size.Y;
+
 		dirt = GetNode<TileMap>("Dirt");
 		floor = GetNode<TileMap>("Floor");
 		newMapButton = GetNode<Button>("NewMapButton");
 		noiseVisual = GetNode<Godot.Sprite2D>("NoiseVisual");
 
 		noise = new FastNoiseLite();
+		noise.NoiseType = noiseType;
+
+		noiseTexture2D = new NoiseTexture2D();
 
 		rng = new RandomNumberGenerator();
 
 
-
-		// Sets the noise type
-		switch (noiseType)
-		{
-			case 0:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.Simplex;
-				break;
-			case 1:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.SimplexSmooth;
-				break;
-			case 2:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.Cellular;
-				break;
-			case 3:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
-				break;
-			case 4:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.ValueCubic;
-				break;
-			default:
-				noise.NoiseType = FastNoiseLite.NoiseTypeEnum.Value;
-				break;
-		}
-
-		NoiseTexture2D noiseTexture2D = new NoiseTexture2D();
+		// NOISE STUFF
+		// ---------------------------------------------------------------------- 
+		// Showing full noise map
 		noiseTexture2D.Noise = noise;
 
 		noiseTexture2D.Normalize = true;
+		noiseTexture2D.Width = 200;
+		noiseTexture2D.Height = 200;
 
+		GD.Print("NoiseTexture2D: " + noiseTexture2D.GetSize());
+		GD.Print(screenX + " " + screenY);
+		
 		noiseVisual.Texture = noiseTexture2D;
-		 
-		noiseVisual.Hide();
-
+		noiseVisual.Offset = new Vector2(110, 110);
+		// noiseVisual.Hide();
 
 		// Configure the noise parameter
 		noise.Frequency = frequency; // Adjust frequency for different levels of detail
 		noise.FractalOctaves = fractalOctaves; // Adjust number of octaves for more details
 		noise.FractalLacunarity = fractalLacunarity; // Higher octaves producing noise with finer details and rougher appearance
 		noise.FractalGain = fractalGain; // Determines strength of subsequent layer of noise
-
-
+		// ---------------------------------------------------------------------- 
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -99,19 +88,23 @@ public partial class World : Node2D
 
 	public void OnNewMapButtonPressed()
 	{
+		// TODO: Zoom map out to fit noise map
+
 		dirt.Clear();
 		noise.Seed = (int)rng.Randi();
 
-		// Screen size
-		var screenX = GetViewportRect().Size.X;
-		var screenY = GetViewportRect().Size.Y;
+		Color red = new Color("ff0000");
+
+		var noiseX = noiseTexture2D.Width;
+		var noiseY = noiseTexture2D.Height;
+
 
 		// Set the random floor and noise for path
-		for (int x = 0; x < screenX; x++)
+		for (int x = 0; x < noiseTexture2D.Width; x++)
 		{
-			for (int y = 0; y < screenY; y++)
+			for (int y = 0; y < noiseTexture2D.Height; y++)
 			{
-				if (noise.GetNoise2D(x, y) < -0)
+				if (noise.GetNoise2D(x, y) < 0)
 				{
 					dirt.SetCell(0, new Vector2I(x, y), 0, new Vector2I(1, 1));
 				}
@@ -121,9 +114,6 @@ public partial class World : Node2D
 				}
 			}
 		}
-
-		GD.Print(noise.GetNoise2D(screenX, screenY));
-
 	}
 
 
@@ -134,4 +124,6 @@ public partial class World : Node2D
 		else
 			noiseVisual.Show();
 	}
+
+
 }
